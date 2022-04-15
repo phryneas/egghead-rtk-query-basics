@@ -3,30 +3,24 @@ import ReactDOM from "react-dom/client";
 import { createApi, ApiProvider } from "@reduxjs/toolkit/query/react";
 
 const api = createApi({
-  baseQuery: () => {},
+  baseQuery: async (url) => {
+    const result = await fetch(url);
+    if (result.ok) {
+      const data = await result.json();
+      return { data };
+    } else {
+      return { error: "something went wrong" };
+    }
+  },
   endpoints: (build) => ({
     pokemonList: build.query({
-      async queryFn() {
-        const result = await fetch("https://pokeapi.co/api/v2/pokemon?limit=9");
-        if (result.ok) {
-          const data = await result.json();
-          return { data };
-        } else {
-          return { error: "something went wrong" };
-        }
+      query() {
+        return "https://pokeapi.co/api/v2/pokemon?limit=9";
       },
     }),
     pokemonDetail: build.query({
-      async queryFn({ name }) {
-        const result = await fetch(
-          `https://pokeapi.co/api/v2/pokemon/${name}/`
-        );
-        if (result.ok) {
-          const data = await result.json();
-          return { data };
-        } else {
-          return { error: "something went wrong" };
-        }
+      query({ name }) {
+        return `https://pokeapi.co/api/v2/pokemon/${name}/`;
       },
     }),
   }),
