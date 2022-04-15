@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { createApi, ApiProvider } from "@reduxjs/toolkit/query/react";
 
 // data copy & pasted from https://pokeapi.co/api/v2/pokemon?limit=9
 const fakePokemonListing = {
@@ -40,10 +41,36 @@ const fakePokemonDetailData = {
   },
 };
 
+function simulateLoading() {
+  return new Promise((resolve) => setTimeout(resolve, 500));
+}
+
+const api = createApi({
+  baseQuery: () => {},
+  endpoints: (build) => ({
+    pokemonList: build.query({
+      async queryFn() {
+        await simulateLoading();
+        return { data: fakePokemonListing };
+      },
+    }),
+    pokemonDetail: build.query({
+      async queryFn() {
+        await simulateLoading();
+        return { data: fakePokemonDetailData };
+      },
+    }),
+  }),
+});
+
+const { usePokemonListQuery, usePokemonDetailQuery } = api;
+
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
-    <App />
+    <ApiProvider api={api}>
+      <App />
+    </ApiProvider>
   </React.StrictMode>
 );
 
@@ -70,22 +97,32 @@ function App() {
 }
 
 function PokemonList({ onPokemonSelected }) {
-  const data = fakePokemonListing;
+  const { isLoading, isError, isSuccess, data } = usePokemonListQuery();
 
-  return (
-    <article>
-      <h2>Overview</h2>
-      <ol start={1}>
-        {data.results.map((pokemon) => (
-          <li key={pokemon.name}>
-            <button onClick={() => onPokemonSelected(pokemon.name)}>
-              {pokemon.name}
-            </button>
-          </li>
-        ))}
-      </ol>
-    </article>
-  );
+  if (isLoading) {
+    return <p>loading, please wait</p>;
+  }
+
+  if (isError) {
+    return <p>something went wrong</p>;
+  }
+
+  if (isSuccess) {
+    return (
+      <article>
+        <h2>Overview</h2>
+        <ol start={1}>
+          {data.results.map((pokemon) => (
+            <li key={pokemon.name}>
+              <button onClick={() => onPokemonSelected(pokemon.name)}>
+                {pokemon.name}
+              </button>
+            </li>
+          ))}
+        </ol>
+      </article>
+    );
+  }
 }
 
 const listFormatter = new Intl.ListFormat("en-GB", {
@@ -93,21 +130,31 @@ const listFormatter = new Intl.ListFormat("en-GB", {
   type: "conjunction",
 });
 function PokemonDetails({ pokemonName }) {
-  const data = fakePokemonDetailData;
+  const { isLoading, isError, isSuccess, data } = usePokemonDetailQuery();
 
-  return (
-    <article>
-      <h2>{data.name}</h2>
-      <img src={data.sprites.front_default} alt={data.name} />
-      <ul>
-        <li>id: {data.id}</li>
-        <li>height: {data.height}</li>
-        <li>weight: {data.weight}</li>
-        <li>
-          types:
-          {listFormatter.format(data.types.map((item) => item.type.name))}
-        </li>
-      </ul>
-    </article>
-  );
+  if (isLoading) {
+    return <p>loading, please wait</p>;
+  }
+
+  if (isError) {
+    return <p>something went wrong</p>;
+  }
+
+  if (isSuccess) {
+    return (
+      <article>
+        <h2>{data.name}</h2>
+        <img src={data.sprites.front_default} alt={data.name} />
+        <ul>
+          <li>id: {data.id}</li>
+          <li>height: {data.height}</li>
+          <li>weight: {data.weight}</li>
+          <li>
+            types:
+            {listFormatter.format(data.types.map((item) => item.type.name))}
+          </li>
+        </ul>
+      </article>
+    );
+  }
 }
