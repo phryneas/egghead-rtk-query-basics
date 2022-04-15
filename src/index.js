@@ -1,27 +1,30 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { createApi, ApiProvider } from "@reduxjs/toolkit/query/react";
+import {
+  createApi,
+  ApiProvider,
+  fetchBaseQuery,
+} from "@reduxjs/toolkit/query/react";
 
 const api = createApi({
-  baseQuery: async (url) => {
-    const result = await fetch(url);
-    if (result.ok) {
-      const data = await result.json();
-      return { data };
-    } else {
-      return { error: "something went wrong" };
-    }
-  },
+  baseQuery: fetchBaseQuery({
+    baseUrl: "https://pokeapi.co/api/v2/",
+  }),
   endpoints: (build) => ({
     pokemonList: build.query({
       query() {
-        return "https://pokeapi.co/api/v2/pokemon?limit=9";
+        return {
+          // these are specific to `fetchBaseQuery`
+          url: "pokemon",
+          params: { limit: 9 },
+          // all the different arguments that you could also pass into the `fetch` "init" option
+          // see https://developer.mozilla.org/en-US/docs/Web/API/fetch#parameters
+          method: "GET", // GET is the default, this could be skipped
+        };
       },
     }),
     pokemonDetail: build.query({
-      query({ name }) {
-        return `https://pokeapi.co/api/v2/pokemon/${name}/`;
-      },
+      query: ({ name }) => `pokemon/${name}/`,
     }),
   }),
 });
