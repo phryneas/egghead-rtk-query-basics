@@ -1,10 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import {
-  createApi,
-  ApiProvider,
-  fetchBaseQuery,
-} from "@reduxjs/toolkit/query/react";
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+
+import { configureStore } from "@reduxjs/toolkit";
+import { Provider } from "react-redux";
 
 interface PokemonListing {
   count: number;
@@ -56,12 +55,20 @@ const api = createApi({
 
 const { usePokemonListQuery, usePokemonDetailQuery } = api;
 
+const store = configureStore({
+  reducer: {
+    [api.reducerPath]: api.reducer,
+  },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(api.middleware),
+});
+
 const root = ReactDOM.createRoot(document.getElementById("root")!);
 root.render(
   <React.StrictMode>
-    <ApiProvider api={api}>
+    <Provider store={store}>
       <App />
-    </ApiProvider>
+    </Provider>
   </React.StrictMode>
 );
 
